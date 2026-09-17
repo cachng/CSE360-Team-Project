@@ -13,6 +13,8 @@ package entityClasses;
  * 
  */ 
 
+// this is a github test
+
 public class User {
 	
 	/*
