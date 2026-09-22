@@ -116,6 +116,10 @@ public class ViewUserUpdate {
 	public static Scene theUserUpdateScene = null;	// The Scene each invocation populates
 
 	private static Optional<String> result;		// The result from a pop-up dialog
+	
+	// Final values for the size of the password changer pop-up
+	public final static double PASSWORD_WINDOW_WIDTH = 500;
+	public final static double PASSWORD_WINDOW_HEIGHT = 430;
 
 	/*-********************************************************************************************
 
@@ -193,6 +197,9 @@ public class ViewUserUpdate {
     	theStage.setTitle("CSE 360 Foundation Code: Update User Account Details");
         theStage.setScene(theUserUpdateScene);
 		theStage.show();
+		
+		// Set up the button so users are able to change their password
+		
 	}
 
 	
@@ -222,6 +229,8 @@ public class ViewUserUpdate {
 		dialogUpdateEmailAddresss = new TextInputDialog("");
 
 		// Establish the label for each of the dialogs.
+		
+		
 		dialogUpdateFirstName.setTitle("Update First Name");
 		dialogUpdateFirstName.setHeaderText("Update your First Name");
 		
@@ -255,6 +264,36 @@ public class ViewUserUpdate {
         setupLabelUI(label_Password, "Arial", 18, 190, Pos.BASELINE_RIGHT, 5, 150);
         setupLabelUI(label_CurrentPassword, "Arial", 18, 260, Pos.BASELINE_LEFT, 200, 150);
         setupButtonUI(button_UpdatePassword, "Dialog", 18, 275, Pos.CENTER, 500, 143);
+        button_UpdatePassword.setOnAction((_) -> {
+    		
+    		// Label the window that holds the stage
+    		Pane theRoot = new Pane();							// Create a pane within the window
+    		Stage popupStage = new Stage();
+    		
+    		popupStage.setTitle("Specify your password");
+    		
+    		passwordPopUpWindow.View.setStage(popupStage); // sets up the stage for the pop-up
+    		passwordPopUpWindow.View.view(theRoot);		// Create the GUI
+    		Scene theScene = new Scene(theRoot, PASSWORD_WINDOW_WIDTH, PASSWORD_WINDOW_HEIGHT);	// Create the scene
+    		
+    		popupStage.setOnHidden(event -> {
+    	        String newPassword = passwordPopUpWindow.Controller.getValidatedPassword();
+
+    	        theDatabase.updatePassword(theUser.getUserName(), newPassword);
+    	        theDatabase.getUserAccountDetails(theUser.getUserName());
+    	        theUser.setPassword(theDatabase.getCurrentPassword());
+    	        label_CurrentPassword.setText(theUser.getPassword());
+    	    });
+    		
+    		popupStage.setScene(theScene);						// Set the scene on the stage
+    		popupStage.show();									// Show the stage to the user
+    		
+    		
+    		// When the stage is shown to the user, the pane within the window is visible.  This means
+    		// that the labels, fields, and buttons of the Graphical User Interface (GUI) are visible 
+    		// and it is now possible for the user to select input fields and enter values into them, 
+    		// click on buttons, and read the labels, the results, and the error messages.
+        });
         
         // First Name
         setupLabelUI(label_FirstName, "Arial", 18, 190, Pos.BASELINE_RIGHT, 5, 200);

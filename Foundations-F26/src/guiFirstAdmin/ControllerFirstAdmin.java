@@ -105,41 +105,49 @@ public class ControllerFirstAdmin {
 	 */
 	protected static void doSetupAdmin(Stage ps, int r) {
 		// Make sure the UserName is valid
-		String errMessage = UserNameRecognizer.checkForValidUserName(adminUsername);
-		if (errMessage != "") {
+		String usernameErrorMessage = UserNameRecognizer.checkForValidUserName(adminUsername);
+		if (!usernameErrorMessage.isEmpty()) {
 			// The username is invalid, so clear the username fields, explain the username
 			// must start from A-Z or a-z and special characters (., "&","_","-" must always be between two alphanumeric characters.
 			ViewFirstAdmin.text_AdminUsername.setText("");
-			ViewFirstAdmin.label_firstAdminError.setText(errMessage);
+			ViewFirstAdmin.label_firstAdminError.setText(usernameErrorMessage);
+			return;
 		}
 		
 		// Make sure the two passwords are the same
-		else if (adminPassword1.compareTo(adminPassword2) == 0) {
-        	// Create the passwords and proceed to the user home page
-        	User user = new User(adminUsername, adminPassword1, "", "", "", "", "", true, false, 
-        			false);
-            try {
-            	// Create a new User object with admin role and register in the database
-            	theDatabase.register(user);
-            	}
-            catch (SQLException e) {
-                System.err.println("*** ERROR *** Database error trying to register a user: " + 
-                		e.getMessage());
-                e.printStackTrace();
-                System.exit(0);
-            }
-            
-            // User was established in the database, so navigate to the User Update Page
-        	guiUserUpdate.ViewUserUpdate.displayUserUpdate(ViewFirstAdmin.theStage, user);
-		}
-		else {
+		if (adminPassword1.compareTo(adminPassword2) != 0) {
 			// The two passwords are NOT the same, so clear the passwords, explain the passwords
 			// must be the same, and clear the message as soon as the first character is typed.
 			ViewFirstAdmin.text_AdminPassword1.setText("");
 			ViewFirstAdmin.text_AdminPassword2.setText("");
-			ViewFirstAdmin.label_firstAdminError.setText(
-					"The two passwords must match. Please try again!");
+			ViewFirstAdmin.label_firstAdminError.setText("The two passwords must match. Please try again!");
+			return;
 		}
+		
+		String passwordErrorMessage = passwordPopUpWindow.Model.evaluatePassword(adminPassword1);
+		if (!passwordErrorMessage.isEmpty()) {
+			ViewFirstAdmin.text_AdminPassword1.setText("");
+			ViewFirstAdmin.text_AdminPassword2.setText("");
+			ViewFirstAdmin.label_firstAdminError.setText(passwordErrorMessage);
+			return;
+		}
+		
+		// Create the first admin user with the username and password and proceed to the user home page
+    	User user = new User(adminUsername, adminPassword1, "", "", "", "", "", true, false, 
+    			false);
+        try {
+        	// Create a new User object with admin role and register in the database
+        	theDatabase.register(user);
+        	}
+        catch (SQLException e) {
+            System.err.println("*** ERROR *** Database error trying to register a user: " + 
+            		e.getMessage());
+            e.printStackTrace();
+            System.exit(0);
+        }
+        
+        // User was established in the database, so navigate to the User Update Page
+    	guiUserUpdate.ViewUserUpdate.displayUserUpdate(ViewFirstAdmin.theStage, user);
 	}
 	
 	
