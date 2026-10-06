@@ -100,8 +100,10 @@ public class ControllerNewAccount {
 			return;
 		}
 		
-		
+		// Makes sure the password is valid
 		String passwordErrorMessage = passwordPopUpWindow.Model.evaluatePassword(ViewNewAccount.text_Password1.getText());
+		// If the password is not valid, the error message is not empty.
+		// the method will alert the user
 		if (!passwordErrorMessage.isEmpty()) {
 			ViewNewAccount.text_Password1.setText("");
 			ViewNewAccount.text_Password2.setText("");

@@ -50,11 +50,21 @@ public class User {
      * 
      * @param password specifies the account password for this user
      * 
-     * @param r1 specifies the the Admin attribute (TRUE or FALSE) for this user
+     * @param fn specifies the first name for this user
      * 
-     * @param r2 specifies the the Student attribute (TRUE or FALSE) for this user
+     * @param mn specifies the middle name for this user
      * 
-     * @param r3 specifies the the Reviewer attribute (TRUE or FALSE) for this user
+     * @param ln specifies the last name for this user
+     * 
+     * @param pfn specifies the perferred first name of this user
+     * 
+     * @param ea specifies the email address of the user
+     * 
+     * @param r1 specifies the Admin attribute (TRUE or FALSE) for this user
+     * 
+     * @param r2 specifies the Student attribute (TRUE or FALSE) for this user
+     * 
+     * @param r3 specifies the Reviewer attribute (TRUE or FALSE) for this user
      * 
      */
     // Constructor to initialize a new User object with userName, password, and role.
@@ -198,12 +208,67 @@ public class User {
     // Gets the current value of the Student role attribute.
     public String getEmailAddress() { return emailAddress; }
 
+    /**
+     * <p> Method: void setUserName() </p>
+     * 
+     * <p> Description: This setter sets the value of userName </p>
+     * 
+     * @param s string for userName
+     */	
     public void setUserName(String s) { userName = s; }
+    
+    /**
+     * <p> Method: void setPassword() </p>
+     * 
+     * <p> Description: This setter sets the value of password </p>
+     * 
+     * @param s string for password
+     */
     public void setPassword(String s) { password = s; }
+    
+    /**
+     * <p> Method: void setFirstName() </p>
+     * 
+     * <p> Description: This setter sets the value of firstName </p>
+     * 
+     * @param s string for firstName
+     */
     public void setFirstName(String s) { firstName = s; }
+    
+    /**
+     * <p> Method: void setMiddleName() </p>
+     * 
+     * <p> Description: This setter sets the value of middleName </p>
+     * 
+     * @param s string for middleName
+     */
     public void setMiddleName(String s) { middleName = s; }
+    
+    /**
+     * <p> Method: void setLastName() </p>
+     * 
+     * <p> Description: This setter sets the value of lastName </p>
+     * 
+     * @param s string for lastName
+     */
     public void setLastName(String s) { lastName = s; }
+    
+    /**
+     * <p> Method: void setPreferredFirstName() </p>
+     * 
+     * <p> Description: This setter sets the value of the prefferedFirstName </p>
+     * 
+     * @param s strng for prefferedFirstName
+     */
     public void setPreferredFirstName(String s) { preferredFirstName = s; }
+    
+    /**
+     * <p> Method: void setEmailAddress() </p>
+     * 
+     * <p> Description: This setter sets the value of the emailAddress </p>
+     * 
+     * @param s string for emailAddress
+     */
     public void setEmailAddress(String s) { emailAddress = s; }
 
     

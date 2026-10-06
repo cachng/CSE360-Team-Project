@@ -140,7 +140,7 @@ public class ControllerFirstAdmin {
         	theDatabase.register(user);
         	}
         catch (SQLException e) {
-            System.err.println("*** ERROR *** Database error trying to register a user: " + 
+            System.err.println("*** ERROR *** Database error trying to register a user: " + 	
             		e.getMessage());
             e.printStackTrace();
             System.exit(0);

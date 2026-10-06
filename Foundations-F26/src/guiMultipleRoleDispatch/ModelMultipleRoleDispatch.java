@@ -16,5 +16,12 @@ package guiMultipleRoleDispatch;
  */
 
 public class ModelMultipleRoleDispatch {
-
+	
+	/**
+	 * Empty Constructor
+	 */
+	
+	public ModelMultipleRoleDispatch() {
+		
+	}
 }

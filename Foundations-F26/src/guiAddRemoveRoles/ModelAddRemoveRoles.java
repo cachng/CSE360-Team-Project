@@ -16,5 +16,11 @@ package guiAddRemoveRoles;
  */
 
 public class ModelAddRemoveRoles {
-
+	/**
+	 * Empty Constructor
+	 */
+	
+	public ModelAddRemoveRoles() {
+		
+	}
 }

@@ -113,13 +113,13 @@ public class ViewUserUpdate {
 	private static Pane theRootPane;			// The Pane that holds all the GUI widgets
 	private static User theUser;				// The current user of the application
 
-	public static Scene theUserUpdateScene = null;	// The Scene each invocation populates
+	private static Scene theUserUpdateScene = null;	// The Scene each invocation populates
 
 	private static Optional<String> result;		// The result from a pop-up dialog
 	
 	// Final values for the size of the password changer pop-up
-	public final static double PASSWORD_WINDOW_WIDTH = 500;
-	public final static double PASSWORD_WINDOW_HEIGHT = 430;
+	private final static double PASSWORD_WINDOW_WIDTH = 500;
+	private final static double PASSWORD_WINDOW_HEIGHT = 430;
 
 	/*-********************************************************************************************
 
@@ -273,7 +273,7 @@ public class ViewUserUpdate {
     		popupStage.setTitle("Specify your password");
     		
     		passwordPopUpWindow.View.setStage(popupStage); // sets up the stage for the pop-up
-    		passwordPopUpWindow.View.view(theRoot);		// Create the GUI
+    		passwordPopUpWindow.View.setupView(theRoot);		// Create the GUI
     		Scene theScene = new Scene(theRoot, PASSWORD_WINDOW_WIDTH, PASSWORD_WINDOW_HEIGHT);	// Create the scene
     		
     		popupStage.setOnHidden(event -> {

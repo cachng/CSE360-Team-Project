@@ -90,6 +90,12 @@ public class ViewMultipleRoleDispatch {
 
 	 */
 
+	/**
+	 * public method that displays multiple role dispatches
+	 * 
+	 * @param ps stage to show GUI
+	 * @param user User for the user's data
+	 */
 	public static void displayMultipleRoleDispatch(Stage ps, User user) {
 		
 		// Establish the references to the GUI and the current user

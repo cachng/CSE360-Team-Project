@@ -176,10 +176,9 @@ public class Database {
  * 
  * <p> Description: Creates a new row in the database using the user parameter. </p>
  * 
- * @throws SQLException when there is an issue creating the SQL command or executing it.
- * 
  * @param user specifies a user object to be added to the database.
  * 
+ * @throws SQLException when there is an issue creating the SQL command or executing it.
  */
 	public void register(User user) throws SQLException {
 		String insertUser = "INSERT INTO userDB (userName, password, firstName, middleName, "
@@ -225,7 +224,7 @@ public class Database {
  *  <p> Method: List getUserList() </p>
  *  
  *  <P> Description: Generate an List of Strings, one for each user in the database,
- *  starting with "<Select User>" at the start of the list. </p>
+ *  starting with "Select User" at the start of the list. </p>
  *  
  *  @return a list of userNames found in the database.
  */
@@ -543,21 +542,21 @@ public class Database {
 	}
 	
 	/*******
-	 * <p> Method: void updatePassword(String username, String newPassword) </p>
+	 * <p> Method: void updatePassword(String userName, String newPassword) </p>
 	 * 
-	 * <p> Description: Update the password of a user given that user's username and the new
+	 * <p> Description: Update the password of a user given that user's user name and the new
 	 *		password.</p>
 	 * 
-	 * @param password is the password of the user
+	 * @param userName is the username of the user
 	 * 
 	 * @param newPassword is the new password for the user
 	 *  
 	 */
-	public void updatePassword(String username, String newPassword) {
+	public void updatePassword(String userName, String newPassword) {
 	    String query = "UPDATE userDB SET password = ? WHERE userName = ?";
 	    try (PreparedStatement ps = connection.prepareStatement(query)) {
 	        ps.setString(1, newPassword);
-	        ps.setString(2, username);
+	        ps.setString(2, userName);
 	        ps.executeUpdate();
 	    } catch (SQLException e) {
 	        System.err.println("*** ERROR *** Database error trying to update password: " + e.getMessage());
@@ -566,7 +565,7 @@ public class Database {
 	}
 	
 	
-	/*******
+	/*******.
 	 * <p> Method: String getFirstName(String username) </p>
 	 * 
 	 * <p> Description: Get the first name of a user given that user's username.</p>
