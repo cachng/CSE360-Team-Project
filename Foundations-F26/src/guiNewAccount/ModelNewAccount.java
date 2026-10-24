@@ -16,4 +16,10 @@ package guiNewAccount;
  */
 public class ModelNewAccount {
 
+	/**
+	 * Empty Constructor
+	 */
+	public ModelNewAccount() {
+		
+	}
 }

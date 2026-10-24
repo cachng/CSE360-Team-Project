@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import lessonsLearned.*;
+
 import entityClasses.User;
 
 /*******
@@ -125,6 +127,23 @@ public class Database {
 	    		+ "emailAddress VARCHAR(255), "
 	            + "role VARCHAR(10))";
 	    statement.execute(invitationCodesTable);
+	    
+	    // Create the lessons learned table (core fields, locking, and experience information)
+	    String lessonsTable = "CREATE TABLE IF NOT EXISTS lessonsDB ("
+	            + "id INT AUTO_INCREMENT PRIMARY KEY, "
+	            + "title VARCHAR(100), "
+	            + "description VARCHAR(2000), "
+	            + "author VARCHAR(255), "
+	            + "category VARCHAR(20), "
+	            + "moduleNumber INT, "
+	            + "dateCreated VARCHAR(30), "
+	            + "dateUpdated VARCHAR(30), "
+	            + "lockedFields VARCHAR(200) DEFAULT '', "
+	            + "whatWasDone VARCHAR(2000), "
+	            + "howItWasDone VARCHAR(2000), "
+	            + "hoursSpent DOUBLE DEFAULT 0, "
+	            + "effortNotes VARCHAR(2000))";
+	    statement.execute(lessonsTable);
 	}
 
 
@@ -176,10 +195,9 @@ public class Database {
  * 
  * <p> Description: Creates a new row in the database using the user parameter. </p>
  * 
- * @throws SQLException when there is an issue creating the SQL command or executing it.
- * 
  * @param user specifies a user object to be added to the database.
  * 
+ * @throws SQLException when there is an issue creating the SQL command or executing it.
  */
 	public void register(User user) throws SQLException {
 		String insertUser = "INSERT INTO userDB (userName, password, firstName, middleName, "
@@ -225,7 +243,7 @@ public class Database {
  *  <p> Method: List getUserList() </p>
  *  
  *  <P> Description: Generate an List of Strings, one for each user in the database,
- *  starting with "<Select User>" at the start of the list. </p>
+ *  starting with "Select User" at the start of the list. </p>
  *  
  *  @return a list of userNames found in the database.
  */
@@ -542,8 +560,31 @@ public class Database {
 		return;
 	}
 	
-	
 	/*******
+	 * <p> Method: void updatePassword(String userName, String newPassword) </p>
+	 * 
+	 * <p> Description: Update the password of a user given that user's user name and the new
+	 *		password.</p>
+	 * 
+	 * @param userName is the username of the user
+	 * 
+	 * @param newPassword is the new password for the user
+	 *  
+	 */
+	public void updatePassword(String userName, String newPassword) {
+	    String query = "UPDATE userDB SET password = ? WHERE userName = ?";
+	    try (PreparedStatement ps = connection.prepareStatement(query)) {
+	        ps.setString(1, newPassword);
+	        ps.setString(2, userName);
+	        ps.executeUpdate();
+	    } catch (SQLException e) {
+	        System.err.println("*** ERROR *** Database error trying to update password: " + e.getMessage());
+	        e.printStackTrace();
+	    }
+	}
+	
+	
+	/*******.
 	 * <p> Method: String getFirstName(String username) </p>
 	 * 
 	 * <p> Description: Get the first name of a user given that user's username.</p>
@@ -1016,6 +1057,343 @@ public class Database {
 	 */
 	public boolean getCurrentNewRole2() { return currentNewRole2;};
 
+	/*******
+	 * <p> Method: String createLesson(LessonsLearned lesson) </p>
+	 * 
+	 * <p> Description: Validates a lesson, confirms its author is an existing user, and inserts
+	 * 		it into the lessonsDB table. On success the database-assigned id is stored in the
+	 * 		lesson object.  An error message is returned instead of throwing so the caller can
+	 * 		show it directly to the user.</p>
+	 * 
+	 * @param lesson specifies the lesson to be stored.
+	 * 
+	 * @return an empty string if the lesson was created, else a helpful error message.
+	 */
+	public String createLesson(LessonsLearned lesson) {
+		String error = LessonsLearned.validateLesson(lesson);
+		if (!error.isEmpty()) return error;
+		
+		// Only the database can see the user table, so this check lives here
+		if (!doesUserExist(lesson.getAuthor()))
+			return "Author '" + lesson.getAuthor() + "' is not an existing user.";
+		
+		String insert = "INSERT INTO lessonsDB (title, description, author, category, "
+				+ "moduleNumber, dateCreated, dateUpdated) VALUES (?, ?, ?, ?, ?, ?, ?)";
+		try (PreparedStatement pstmt = connection.prepareStatement(insert,
+				Statement.RETURN_GENERATED_KEYS)) {
+			pstmt.setString(1, lesson.getTitle());
+			pstmt.setString(2, lesson.getDescription());
+			pstmt.setString(3, lesson.getAuthor());
+			pstmt.setString(4, lesson.getCategory().name());
+			pstmt.setInt(5, lesson.getModule());
+			pstmt.setString(6, lesson.getDateCreated());
+			pstmt.setString(7, lesson.getDateUpdated());
+			pstmt.executeUpdate();
+			
+			try (ResultSet keys = pstmt.getGeneratedKeys()) {
+				if (keys.next()) lesson.setId(keys.getInt(1));
+			}
+			return "";
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return "Database error while creating the lesson: " + e.getMessage();
+		}
+	}
+
+	
+	/*******
+	 * <p> Method: LessonsLearned getLesson(int id) </p>
+	 * 
+	 * <p> Description: Read one lesson given its id.</p>
+	 * 
+	 * @param id is the unique id of the lesson
+	 * 
+	 * @return the lesson, or null if no lesson has that id.
+	 */
+	public LessonsLearned getLesson(int id) {
+		String query = "SELECT * FROM lessonsDB WHERE id = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setInt(1, id);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) return buildLesson(rs);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	
+	/*******
+	 * <p> Method: LessonCollection getAllLessons() </p>
+	 * 
+	 * <p> Description: Read every lesson in the database.  The collection is empty (never null)
+	 * 		when there are no lessons.</p>
+	 * 
+	 * @return a LessonCollection holding all stored lessons.
+	 */
+	public LessonCollection getAllLessons() {
+		return runLessonQuery("SELECT * FROM lessonsDB ORDER BY id", null);
+	}
+
+	
+	/*******
+	 * <p> Method: LessonCollection getLessonsByCategory(LessonsLearned.Category category) </p>
+	 * 
+	 * <p> Description: Read the subset of lessons that have a given category.</p>
+	 * 
+	 * @param category is the category to match
+	 * 
+	 * @return a LessonCollection of matching lessons, possibly empty.
+	 */
+	public LessonCollection getLessonsByCategory(LessonsLearned.Category category) {
+		if (category == null) return new LessonCollection();
+		return runLessonQuery("SELECT * FROM lessonsDB WHERE category = ? ORDER BY id",
+				category.name());
+	}
+
+	
+	/*******
+	 * <p> Method: LessonCollection getLessonsByAuthor(String author) </p>
+	 * 
+	 * <p> Description: Read the subset of lessons written by a given user.</p>
+	 * 
+	 * @param author is the username of the author
+	 * 
+	 * @return a LessonCollection of matching lessons, possibly empty.
+	 */
+	public LessonCollection getLessonsByAuthor(String author) {
+		if (author == null) return new LessonCollection();
+		return runLessonQuery("SELECT * FROM lessonsDB WHERE author = ? ORDER BY id", author);
+	}
+
+	
+	/*******
+	 * <p> Method: int getNumberOfLessons() </p>
+	 * 
+	 * <p> Description: Determine the number of lessons currently in the table.</p>
+	 * 
+	 * @return the number of lessons in the table.
+	 */
+	public int getNumberOfLessons() {
+		String query = "SELECT COUNT(*) AS count FROM lessonsDB";
+		try {
+			ResultSet resultSet = statement.executeQuery(query);
+			if (resultSet.next()) return resultSet.getInt("count");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return 0;
+	}
+
+	
+	/*******
+	 * <p> Method: String checkAccess(int id, String actingUser, String actingRole) </p>
+	 * 
+	 * <p> Description: Single place that decides whether a user may touch a lesson.  Admin may
+	 * 		access any lesson; a Contributor (Role1) only the lessons they authored.  Every
+	 * 		read-one, update, delete, and add-experience call goes through here so the rule
+	 * 		cannot be forgotten in one operation.</p>
+	 * 
+	 * @return an empty string if access is allowed, else a helpful error message.
+	 */
+	public String checkAccess(int id, String actingUser, String actingRole) {
+		if (!LessonsLearned.ROLE_ADMIN.equals(actingRole)
+				&& !LessonsLearned.ROLE_CONTRIBUTOR.equals(actingRole))
+			return "Role '" + actingRole + "' cannot manage lessons. Use Admin or Role1 (Contributor).";
+		LessonsLearned stored = getLesson(id);
+		if (stored == null) return "No lesson exists with id " + id + ".";
+		if (LessonsLearned.ROLE_CONTRIBUTOR.equals(actingRole)
+				&& !stored.getAuthor().equals(actingUser))
+			return "You can only access lessons you created.";
+		return "";
+	}
+
+	
+	/*******
+	 * <p> Method: LessonsLearned getLessonForUser(int id, String actingUser, String actingRole) </p>
+	 * 
+	 * <p> Description: Read one lesson, enforcing the access rules.</p>
+	 * 
+	 * @return the lesson, or null if it does not exist or the user may not see it.
+	 */
+	public LessonsLearned getLessonForUser(int id, String actingUser, String actingRole) {
+		if (!checkAccess(id, actingUser, actingRole).isEmpty()) return null;
+		return getLesson(id);
+	}
+
+	
+	/*******
+	 * <p> Method: LessonCollection getLessonsForUser(String actingUser, String actingRole) </p>
+	 * 
+	 * <p> Description: Admin sees every lesson; a Contributor sees only their own.  An
+	 * 		unsupported role gets an empty collection.</p>
+	 */
+	public LessonCollection getLessonsForUser(String actingUser, String actingRole) {
+		if (LessonsLearned.ROLE_ADMIN.equals(actingRole)) return getAllLessons();
+		if (LessonsLearned.ROLE_CONTRIBUTOR.equals(actingRole)) return getLessonsByAuthor(actingUser);
+		return new LessonCollection();
+	}
+
+	
+	/*******
+	 * <p> Method: String updateLesson(LessonsLearned lesson, String actingUser, String actingRole) </p>
+	 * 
+	 * <p> Description: Save changes to a lesson's title, description, category, and module.
+	 * 		A Contributor may edit only their own lesson and only unlocked fields, and can never
+	 * 		change the locks.  Admin may edit anything and set or clear locks.  The id, author,
+	 * 		and creation date never change.</p>
+	 * 
+	 * @return an empty string on success, else a helpful error message.
+	 */
+	public String updateLesson(LessonsLearned lesson, String actingUser, String actingRole) {
+		if (lesson == null) return "Lesson cannot be null.";
+		String error = checkAccess(lesson.getId(), actingUser, actingRole);
+		if (!error.isEmpty()) return error;
+		error = LessonsLearned.validateLesson(lesson);
+		if (!error.isEmpty()) return error;
+		
+		LessonsLearned stored = getLesson(lesson.getId());
+		String locks = stored.getLockedFields();		// contributors keep the stored locks
+		
+		if (LessonsLearned.ROLE_CONTRIBUTOR.equals(actingRole)) {
+			if (stored.isFieldLocked("title") && !stored.getTitle().equals(lesson.getTitle()))
+				return "The title is locked and cannot be edited.";
+			if (stored.isFieldLocked("description")
+					&& !stored.getDescription().equals(lesson.getDescription()))
+				return "The description is locked and cannot be edited.";
+			if (stored.isFieldLocked("category") && stored.getCategory() != lesson.getCategory())
+				return "The category is locked and cannot be edited.";
+			if (stored.isFieldLocked("module") && stored.getModule() != lesson.getModule())
+				return "The module is locked and cannot be edited.";
+		} else {
+			locks = lesson.getLockedFields();			// only Admin can change locks
+		}
+		
+		lesson.touch();
+		String update = "UPDATE lessonsDB SET title = ?, description = ?, category = ?, "
+				+ "moduleNumber = ?, lockedFields = ?, dateUpdated = ? WHERE id = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(update)) {
+			pstmt.setString(1, lesson.getTitle());
+			pstmt.setString(2, lesson.getDescription());
+			pstmt.setString(3, lesson.getCategory().name());
+			pstmt.setInt(4, lesson.getModule());
+			pstmt.setString(5, locks);
+			pstmt.setString(6, lesson.getDateUpdated());
+			pstmt.setInt(7, lesson.getId());
+			pstmt.executeUpdate();
+			return "";
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return "Database error while updating the lesson: " + e.getMessage();
+		}
+	}
+
+	
+	/*******
+	 * <p> Method: String deleteLesson(int id, String actingUser, String actingRole) </p>
+	 * 
+	 * <p> Description: Remove one lesson.  A Contributor may delete only their own lesson, and
+	 * 		only if it has no locked fields.  Admin may delete any lesson.</p>
+	 * 
+	 * @return an empty string on success, else a helpful error message.
+	 */
+	public String deleteLesson(int id, String actingUser, String actingRole) {
+		String error = checkAccess(id, actingUser, actingRole);
+		if (!error.isEmpty()) return error;
+		LessonsLearned stored = getLesson(id);
+		if (LessonsLearned.ROLE_CONTRIBUTOR.equals(actingRole) && stored.isLocked())
+			return "This lesson has locked fields (" + stored.getLockedFields()
+					+ ") and cannot be deleted.";
+		
+		String delete = "DELETE FROM lessonsDB WHERE id = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(delete)) {
+			pstmt.setInt(1, id);
+			pstmt.executeUpdate();
+			return "";
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return "Database error while deleting the lesson: " + e.getMessage();
+		}
+	}
+
+	
+	/*******
+	 * <p> Method: String addExperience(int id, String actingUser, String actingRole,
+	 * 		String what, String how, double hours, String effort) </p>
+	 * 
+	 * <p> Description: Record (or replace) the experience information for a lesson after a new
+	 * 		attempt to use it: what was done, how, hours spent, and team effort.  Allowed even if
+	 * 		core fields are locked, because locks protect the core information only.</p>
+	 * 
+	 * @return an empty string on success, else a helpful error message.
+	 */
+	public String addExperience(int id, String actingUser, String actingRole,
+			String what, String how, double hours, String effort) {
+		String error = checkAccess(id, actingUser, actingRole);
+		if (!error.isEmpty()) return error;
+		error = LessonsLearned.validateExperience(what, how, hours, effort);
+		if (!error.isEmpty()) return error;
+		
+		String update = "UPDATE lessonsDB SET whatWasDone = ?, howItWasDone = ?, hoursSpent = ?, "
+				+ "effortNotes = ?, dateUpdated = ? WHERE id = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(update)) {
+			pstmt.setString(1, what.trim());
+			pstmt.setString(2, how.trim());
+			pstmt.setDouble(3, hours);
+			pstmt.setString(4, effort.trim());
+			pstmt.setString(5, java.time.LocalDateTime.now().withNano(0).toString());
+			pstmt.setInt(6, id);
+			pstmt.executeUpdate();
+			return "";
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return "Database error while saving experience information: " + e.getMessage();
+		}
+	}
+
+	
+	/*******
+	 * <p> Method: LessonCollection runLessonQuery(String query, String parameter) </p>
+	 * 
+	 * <p> Description: Shared helper so the "all" and "subset" reads do not repeat the same
+	 * 		loop.  The parameter is optional (null means the query has no placeholder).</p>
+	 */
+	private LessonCollection runLessonQuery(String query, String parameter) {
+		LessonCollection result = new LessonCollection();
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			if (parameter != null) pstmt.setString(1, parameter);
+			ResultSet rs = pstmt.executeQuery();
+			while (rs.next()) result.add(buildLesson(rs));
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+	
+	/*******
+	 * <p> Method: LessonsLearned buildLesson(ResultSet rs) </p>
+	 * 
+	 * <p> Description: Convert the current row of a result set into a lesson object.</p>
+	 */
+	private LessonsLearned buildLesson(ResultSet rs) throws SQLException {
+		LessonsLearned lesson = new LessonsLearned();
+		lesson.setId(rs.getInt("id"));
+		lesson.setTitle(rs.getString("title"));
+		lesson.setDescription(rs.getString("description"));
+		lesson.setAuthor(rs.getString("author"));
+		lesson.setCategory(LessonsLearned.Category.valueOf(rs.getString("category")));
+		lesson.setModule(rs.getInt("moduleNumber"));
+		lesson.setDateCreated(rs.getString("dateCreated"));
+		lesson.setDateUpdated(rs.getString("dateUpdated"));
+		String locked = rs.getString("lockedFields");
+		if (locked != null) lesson.setLockedFields(locked);
+		String what = rs.getString("whatWasDone");
+		if (what != null)
+			lesson.setExperience(what, rs.getString("howItWasDone"),
+					rs.getDouble("hoursSpent"), rs.getString("effortNotes"));
+		return lesson;
+	}
 	
 	/*******
 	 * <p> Debugging method</p>

@@ -1,5 +1,16 @@
 package guiUserUpdate;
 
-public class Model {
 
+
+/**
+ * Unused Model
+ */
+public class Model {
+	/**
+	 * Empty Constructor
+	 */
+	
+	private Model() {
+		
+	}
 }

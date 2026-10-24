@@ -58,8 +58,11 @@ public class ViewNewAccount {
 	// This alert is used should the invitation code be invalid
     protected static Alert alertInvitationCodeIsInvalid = new Alert(AlertType.INFORMATION);
 
+    // This alert is used should the user enter an invalid username
+    protected static Alert alertUsernameError = new Alert(AlertType.INFORMATION);
+    
 	// This alert is used should the user enter two passwords that do not match
-	protected static Alert alertUsernamePasswordError = new Alert(AlertType.INFORMATION);
+	protected static Alert alertPasswordError = new Alert(AlertType.INFORMATION);
 
     protected static Button button_Quit = new Button("Quit");
 
@@ -77,7 +80,11 @@ public class ViewNewAccount {
     											// and a role for this user
     protected static String emailAddress;		// Established here for use by the controller
     protected static String theRole;			// Established here for use by the controller
-	public static Scene theNewAccountScene = null;	// Access to the User Update page's GUI Widgets
+    
+	/**
+	 * Access to the User Update page's GUI Widgets
+	 */
+	public static Scene theNewAccountScene = null;
 	
 
 	/*-********************************************************************************************
@@ -186,10 +193,17 @@ public class ViewNewAccount {
 		alertInvitationCodeIsInvalid.setHeaderText("The invitation code is not valid.");
 		alertInvitationCodeIsInvalid.setContentText("Correct the code and try again.");
 
+		// If the username is invalid, this alert dialog will tell the user
+		alertUsernameError.setTitle("Invalid Username");
+		alertUsernameError.setHeaderText("The username is not valid");
+		alertUsernameError.setContentText("Input a valid username and try again.");
+
+
+		
 		// If the passwords do not match, this alert dialog will tell the user
-		alertUsernamePasswordError.setTitle("Passwords Do Not Match");
-		alertUsernamePasswordError.setHeaderText("The two passwords must be identical.");
-		alertUsernamePasswordError.setContentText("Correct the passwords and try again.");
+		alertPasswordError.setTitle("Passwords Do Not Match");
+		alertPasswordError.setHeaderText("The two passwords must be identical.");
+		alertPasswordError.setContentText("Correct the passwords and try again.");
 
         // Set up the account creation and login
         setupButtonUI(button_UserSetup, "Dialog", 18, 200, Pos.CENTER, 475, 210);

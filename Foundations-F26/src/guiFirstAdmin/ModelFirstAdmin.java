@@ -17,4 +17,11 @@ package guiFirstAdmin;
 
 public class ModelFirstAdmin {
 
+	/**
+	 * Empty Constructor
+	 */
+	
+	public ModelFirstAdmin() {
+		
+	}
 }
