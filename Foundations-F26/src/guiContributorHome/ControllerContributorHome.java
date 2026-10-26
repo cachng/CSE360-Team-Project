@@ -39,7 +39,7 @@ import javafx.scene.control.TextInputDialog;
  * <p> Copyright: Lynn Robert Carter © 2025 </p>
  * 
  * @author Lynn Robert Carter
- * @author omara
+ * @author Project Team 37
  * 
  * @version 1.00		2025-08-17 Initial version
  * @version 1.01		2025-09-13 Updated JavaDoc description

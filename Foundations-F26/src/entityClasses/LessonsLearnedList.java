@@ -28,8 +28,7 @@ import entityClasses.LessonsLearned.Category;
  *   <li> Delete: {@link #remove(int)}, {@link #clear()} </li>
  * </ul>
  * 
- * @author Cardin
- * @author TP2 Team
+ * @author Project Team 37
  * 
  * @version 1.00	2026-10-26 Initial version for TP2
  */

@@ -47,8 +47,7 @@ import entityClasses.User;
  * <p> Copyright: Lynn Robert Carter © 2025 </p>
  * 
  * @author Lynn Robert Carter
- * @author omar
- * @author Cardin
+ * @author Project Team 37
  * 
  * @version 1.00		2025-08-17 Initial version
  * @version 2.00		2026-10-22 Changed the page to support the Contributor User Stories for
