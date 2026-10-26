@@ -187,7 +187,16 @@ public class ControllerAdminHome {
 		return false;
 	}
 	
+	
+	protected static void doCreateLesson() {
+	    guiNewLessonsLearned.ViewGuiNewLessonsLearned.displayNewLessonLearned(
+	            ViewAdminHome.theStage, ViewAdminHome.theUser);
+	}
+	
+	
 	/**********
+	 * 
+	 * 
 	 * <p> 
 	 * 
 	 * Title: performLogout () Method. </p>

@@ -22,7 +22,7 @@ public class LessonsLearned {
 	public static final int DESCRIPTION_MIN = 20;
 	public static final int DESCRIPTION_MAX = 2000;
 	public static final int MODULE_MIN = 1;
-	public static final int MODULE_MAX = 20; // adjust if necessary
+	public static final int MODULE_MAX = 20; // adjust to your course's module count
 
 	// ----- Instance fields -----
 	private int id;                 // assigned by the database, 0 = not yet saved
@@ -36,7 +36,7 @@ public class LessonsLearned {
 	
 	// ----- Roles (Foundation role names mapped to lesson roles) -----
 	public static final String ROLE_ADMIN = "Admin";
-	public static final String ROLE_CONTRIBUTOR = "Role1";
+	public static final String ROLE_CONTRIBUTOR = "Contributor";
 
 	// ----- Locking and experience limits -----
 	public static final List<String> LOCKABLE_FIELDS =

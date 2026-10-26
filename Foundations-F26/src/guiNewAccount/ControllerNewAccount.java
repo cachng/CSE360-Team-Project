@@ -8,7 +8,7 @@ import guiFirstAdmin.ViewFirstAdmin;
 import userNameRecognizer.UserNameRecognizer;
 
 /*******
- * <p> Title: ControllerNewAccount Class. </p>
+ * <p> Title: ControllerGuiNewLessonsLearned Class. </p>
  * 
  * <p> Description: The Java/FX-based New Account Page.  This class provides the controller actions
  * to allow the user to establish a new account after responding to an invitation and the use of a
@@ -117,18 +117,14 @@ public class ControllerNewAccount {
 		// The passwords match so we will set up the role and the User object base on the 
 		// information provided in the invitation
 		if (ViewNewAccount.theRole.compareTo("Admin") == 0) {
-			roleCode = 1;
-			user = new User(username, password, "", "", "", "", "", true, false, false);
-		} else if (ViewNewAccount.theRole.compareTo("Role1") == 0) {
-			roleCode = 2;
-			user = new User(username, password, "", "", "", "", "", false, true, false);
+		    roleCode = 1;
+		    user = new User(username, password, "", "", "", "", "", true, false, false);
+		} else if (ViewNewAccount.theRole.compareTo("Contributor") == 0 || ViewNewAccount.theRole.compareTo("Role1") == 0) {
+		    roleCode = 2;
+		    user = new User(username, password, "", "", "", "", "", false, true, false);
 		} else if (ViewNewAccount.theRole.compareTo("Role2") == 0) {
-			roleCode = 3;
-			user = new User(username, password, "", "", "", "", "", false, false, true);
-		} else {
-			System.out.println("**** Trying to create a New Account for a role that does not exist!");
-			System.exit(0);
-			return;
+		    roleCode = 3;
+		    user = new User(username, password, "", "", "", "", "", false, false, true);
 		}
 			
 			// Unlike the FirstAdmin, we know the email address, so set that into the user as well.

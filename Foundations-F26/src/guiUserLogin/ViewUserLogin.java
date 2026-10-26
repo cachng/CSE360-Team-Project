@@ -169,7 +169,7 @@ public class ViewUserLogin {
 		setupButtonUI(button_SetupAccount, "Dialog", 18, 200, Pos.CENTER, 475, 340);
 		button_SetupAccount.setOnAction((_) -> {
 			System.out.println("**** Calling doSetupAccount");
-			ControllerUserLogin.doSetupAccount(theStage, text_Invitation.getText());
+			ControllerUserLogin.doSetupAccount(theStage, text_Invitation.getText().trim());;
 		});
 
 		// Set up the Quit button  

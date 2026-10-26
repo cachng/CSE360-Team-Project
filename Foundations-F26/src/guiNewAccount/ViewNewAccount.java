@@ -15,9 +15,9 @@ import database.Database;
 import entityClasses.User;
 
 /*******
- * <p> Title: ViewNewAccount Class. </p>
+ * <p> Title: ViewGuiNewLessonsLearned Class. </p>
  * 
- * <p> Description: The ViewNewAccount Page is used to enable a potential user with an invitation
+ * <p> Description: The ViewGuiNewLessonsLearned Page is used to enable a potential user with an invitation
  * code to establish an account after they have specified an invitation code on the standard login
  * page. </p>
  * 
@@ -152,7 +152,7 @@ public class ViewNewAccount {
 	}
 	
 	/**********
-	 * <p> Constructor: ViewNewAccount() </p>
+	 * <p> Constructor: ViewGuiNewLessonsLearned() </p>
 	 * 
 	 * <p> Description: This constructor is called just once, the first time a new account needs to
 	 * be created.  It establishes all of the common GUI widgets for the page so they are only

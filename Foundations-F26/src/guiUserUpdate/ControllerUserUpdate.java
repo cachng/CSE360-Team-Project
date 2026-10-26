@@ -53,7 +53,7 @@ public class ControllerUserUpdate {
 			guiAdminHome.ViewAdminHome.displayAdminHome(theStage, theUser);
 			break;
 		case 2:
-			guiRole1.ViewRole1Home.displayRole1Home(theStage, theUser);
+			guiContributorHome.ViewContributorHome.displayContributorHome(theStage, theUser);
 			break;
 		case 3:
 			guiRole2.ViewRole2Home.displayRole2Home(theStage, theUser);
