@@ -62,13 +62,11 @@ public class ControllerMultipleRoleDispatch {
 					guiMultipleRoleDispatch.ViewMultipleRoleDispatch.theStage, 
 					guiMultipleRoleDispatch.ViewMultipleRoleDispatch.theUser);
 			
-		// See if Role1
-		} else if (role.compareTo("Role1") == 0) {
-
-			// It is Role1 Role
-			guiRole1.ViewRole1Home.displayRole1Home(
-					guiMultipleRoleDispatch.ViewMultipleRoleDispatch.theStage, 
-					guiMultipleRoleDispatch.ViewMultipleRoleDispatch.theUser);
+		// See if Contributor
+		} else if (role.compareTo("Contributor") == 0 || role.compareTo("Role1") == 0) {
+		    guiContributorHome.ViewContributorHome.displayContributorHome(
+		            guiMultipleRoleDispatch.ViewMultipleRoleDispatch.theStage,
+		            guiMultipleRoleDispatch.ViewMultipleRoleDispatch.theUser);
 			
 		// See if Role2
 		} else if (role.compareTo("Role2") == 0) {

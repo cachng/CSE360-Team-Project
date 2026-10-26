@@ -1,4 +1,4 @@
-package guiRole1;
+package guiContributorHome;
 
 /*******
  * <p> Title: ModelRole1Home Class. </p>
@@ -16,13 +16,13 @@ package guiRole1;
  *  
  */
 
-public class ModelRole1Home {
+public class ModelContributorHome {
 
 /**
  * Empty Constructor
  */
 	
-public ModelRole1Home() {
+public ModelContributorHome() {
 	
 }
 

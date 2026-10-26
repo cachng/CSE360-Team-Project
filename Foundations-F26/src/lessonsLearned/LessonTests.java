@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import database.Database;
+import entityClasses.LessonsLearned;
 import entityClasses.User;
 
 /*******
@@ -14,6 +15,8 @@ import entityClasses.User;
  * does not use the database, so a failure there points at the lesson classes.  The second group
  * uses the database.  The lessons created by the tests are deleted at the end so the tests can
  * be run again.</p>
+ * 
+ * IT IS CURRENTLY UNUSED AND UNFUNCTIONAL BECAUSE OF REFACTORING (RENAMING) OF OTHER CLASSES
  * 
  * <p> Copyright: Cardin Nguyen © 2026 </p>
  * 

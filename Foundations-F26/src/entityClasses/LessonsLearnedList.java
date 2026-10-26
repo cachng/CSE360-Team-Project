@@ -1,8 +1,10 @@
-package lessonsLearned;
+package entityClasses;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import entityClasses.LessonsLearned.Category;
 
 /*******
  * <p> Title: LessonCollection Class. </p>
@@ -11,7 +13,7 @@ import java.util.List;
  * any subset (such as search results), including an empty one.  It uses an ArrayList so there
  * is no fixed upper limit.  It knows nothing about the database; the Database class fills it.</p>
  */
-public class LessonCollection {
+public class LessonsLearnedList {
 
 	private final List<LessonsLearned> lessons = new ArrayList<>();
 
@@ -43,16 +45,16 @@ public class LessonCollection {
 	public boolean isEmpty() { return lessons.isEmpty(); }
 
 	// Returns a new collection with only the lessons of the given category.
-	public LessonCollection filterByCategory(LessonsLearned.Category category) {
-		LessonCollection subset = new LessonCollection();
+	public LessonsLearnedList filterByCategory(LessonsLearned.Category category) {
+		LessonsLearnedList subset = new LessonsLearnedList();
 		for (LessonsLearned l : lessons)
 			if (l.getCategory() == category) subset.add(l);
 		return subset;
 	}
 
 	// Returns a new collection with only the lessons by the given author.
-	public LessonCollection filterByAuthor(String author) {
-		LessonCollection subset = new LessonCollection();
+	public LessonsLearnedList filterByAuthor(String author) {
+		LessonsLearnedList subset = new LessonsLearnedList();
 		for (LessonsLearned l : lessons)
 			if (l.getAuthor().equals(author)) subset.add(l);
 		return subset;

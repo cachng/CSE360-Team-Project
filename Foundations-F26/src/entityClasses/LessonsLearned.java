@@ -1,4 +1,4 @@
-package lessonsLearned;
+package entityClasses;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
@@ -36,7 +36,7 @@ public class LessonsLearned {
 	
 	// ----- Roles (Foundation role names mapped to lesson roles) -----
 	public static final String ROLE_ADMIN = "Admin";
-	public static final String ROLE_CONTRIBUTOR = "Role1";
+	public static final String ROLE_CONTRIBUTOR = "Contributor";
 
 	// ----- Locking and experience limits -----
 	public static final List<String> LOCKABLE_FIELDS =

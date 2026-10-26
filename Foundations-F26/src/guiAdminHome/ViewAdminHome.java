@@ -21,7 +21,7 @@ import entityClasses.User;
 import guiUserUpdate.ViewUserUpdate;
 
 /*******
- * <p> Title: ViewAdminHome Class. </p>
+ * <p> Title: ViewGuiLessonsLearned Class. </p>
  * 
  * <p> Description: The Java/FX-based Admin Home Page.  This class provides the JavaFX GUI widgets
  * that enable an admin to perform admin functions.  This page contains a number of buttons that
@@ -87,8 +87,7 @@ public class ViewAdminHome {
 	protected static Label label_InvitationEmailAddress = new Label("Email Address");
 	protected static TextField text_InvitationEmailAddress = new TextField();
 	protected static ComboBox <String> combobox_SelectRole = new ComboBox <String>();
-	protected static String [] roles = {"Admin", "Role1", "Role2"};
-	protected static Button button_SendInvitation = new Button("Send Invitation");
+	protected static String [] roles = {"Admin", "Contributor", "Role2"};	protected static Button button_SendInvitation = new Button("Send Invitation");
 	protected static Alert alertEmailError = new Alert(AlertType.INFORMATION);
 	protected static Alert alertEmailSent = new Alert(AlertType.INFORMATION);
 	
@@ -103,6 +102,7 @@ public class ViewAdminHome {
 	protected static Button button_DeleteUser = new Button("Delete a User");
 	protected static Button button_ListUsers = new Button("List All Users");
 	protected static Button button_AddRemoveRoles = new Button("Add/Remove Roles");
+	protected static Button button_CreateLesson = new Button("Create New Lesson");
 	protected static Alert alertNotImplemented = new Alert(AlertType.INFORMATION);
 
 	// This is a separator and it is used to partition the GUI for various tasks
@@ -129,7 +129,7 @@ public class ViewAdminHome {
 	protected static User theUser;				// The current logged in User
 
 	private static Scene theAdminHomeScene;		// The shared Scene each invocation populates
-	private static final int theRole = 1;		// Admin: 1; Role1: 2; Role2: 3
+	private static final int theRole = 1;		// Admin: 1; Contributor: 2; Role2: 3
 
 	/*-*******************************************************************************************
 
@@ -229,7 +229,7 @@ public class ViewAdminHome {
 		setupTextUI(text_InvitationEmailAddress, "Arial", 16, 360, Pos.BASELINE_LEFT,
 		130, 205, true);
 	
-		setupComboBoxUI(combobox_SelectRole, "Dialog", 16, 90, 500, 205);
+		setupComboBoxUI(combobox_SelectRole, "Dialog", 16, 120, 500, 205);
 	
 		List<String> list = new ArrayList<String>();	// Create a new list empty list of the
 		for (int i = 0; i < roles.length; i++) {		// roles this code currently supports
@@ -260,6 +260,9 @@ public class ViewAdminHome {
 
 		setupButtonUI(button_AddRemoveRoles, "Dialog", 16, 250, Pos.CENTER, 20, 470);
 		button_AddRemoveRoles.setOnAction((_) -> {ControllerAdminHome.addRemoveRoles(); });
+		
+		setupButtonUI(button_CreateLesson, "Dialog", 16, 250, Pos.CENTER, 300, 270);
+		button_CreateLesson.setOnAction((_) -> {ControllerAdminHome.doCreateLesson(); });
 		
 		// GUI Area 5
 		setupButtonUI(button_Logout, "Dialog", 18, 250, Pos.CENTER, 20, 540);
