@@ -32,8 +32,7 @@ import java.util.List;
  *        {@link #isLocked()} tells the caller whether a Contributor may delete the lesson </li>
  * </ul>
  * 
- * @author Cardin
- * @author TP2
+ * @author Project Team 37
  * 
  * @version 1.00	2026-10-26 Initial version for TP2
  */
