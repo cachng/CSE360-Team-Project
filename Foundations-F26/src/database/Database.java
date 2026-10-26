@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import lessonsLearned.*;
 import entityClasses.LessonsLearned;
 import entityClasses.LessonsLearnedList;
 import entityClasses.User;
@@ -172,7 +171,7 @@ public class Database {
 	
 	
 /*******
- * <p> Method: getNumberOfUsers </p>
+ * <p> Method: getNumberOfUsers() </p>
  * 
  * <p> Description: Returns an integer .of the number of users currently in the user database. </p>
  * 
@@ -1364,7 +1363,7 @@ public boolean loginContributor(User user) {
 
 	
 	/*******
-	 * <p> Method: LessonCollection runLessonQuery(String query, String parameter) </p>
+	 * <p> Method: LessonsLearnedList runLessonQuery(String query, String parameter) </p>
 	 * 
 	 * <p> Description: Shared helper so the "all" and "subset" reads do not repeat the same
 	 * 		loop.  The parameter is optional (null means the query has no placeholder).</p>
