@@ -29,6 +29,8 @@ import entityClasses.User;
  * @version 2.00		2025-04-29 Updated and expanded from the version produce by Pravalika 
  * 							Mukkiri and Ishwarya Hidkimath Basavaraj
  * @version 2.01		2025-12-17 Minor updates for Spring 2026
+ * 
+ * @version 3 2026-10-26 Updated to include Contributors CRUD by Cardin
  */
 
 /*

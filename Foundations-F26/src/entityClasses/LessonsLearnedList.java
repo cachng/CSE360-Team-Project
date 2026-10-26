@@ -28,10 +28,12 @@ import entityClasses.LessonsLearned.Category;
  *   <li> Delete: {@link #remove(int)}, {@link #clear()} </li>
  * </ul>
  * 
+ * @author Cardin
  * @author TP2 Team
  * 
  * @version 1.00	2026-10-26 Initial version for TP2
  */
+
 public class LessonsLearnedList {
 
 	/**
@@ -46,6 +48,16 @@ public class LessonsLearnedList {
 	 * stored. </p>
 	 */
 	private final List<LessonsLearned> lessons = new ArrayList<>();
+	
+	/**
+	 * <p> Constructor: LessonsLearnedList() </p>
+	 * 
+	 * <p> Description: Creates an empty list of lessons.  Lessons are then added with
+	 * {@link #add(LessonsLearned)}, either by the Database class when loading stored lessons
+	 * or by the filter methods when building a subset. </p>
+	 */
+	public LessonsLearnedList() {
+	}
 
 	/**
 	 * <p> Method: add(LessonsLearned lesson) </p>
