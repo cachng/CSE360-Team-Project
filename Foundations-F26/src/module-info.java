@@ -13,4 +13,6 @@ module FoundationsF26 {
 	requires javafx.graphics;
 	
 	opens applicationMain to javafx.graphics, javafx.fxml;
+	requires org.junit.jupiter.api;
+	opens roleTests to org.junit.platform.commons;
 }

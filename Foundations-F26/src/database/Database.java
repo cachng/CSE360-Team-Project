@@ -8,6 +8,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.time.LocalDateTime;
 
 import java.util.Map;
 
@@ -34,6 +35,10 @@ import entityClasses.User;
  * @version 2.00		2025-04-29 Updated and expanded from the version produce by Pravalika 
  * 							Mukkiri and Ishwarya Hidkimath Basavaraj
  * @version 2.01		2025-12-17 Minor updates for Spring 2026
+ * 
+ * @version 3 2026-10-26 Updated to include Contributors CRUD by Cardin
+ * 
+ * @version 4 2026-11-11 Invitation codes now have a deadline and expire (Cardin, TP3)
  */
 
 /*
@@ -69,6 +74,9 @@ public class Database {
 	private boolean currentAdminRole;
 	private boolean currentContributor;
 	private boolean currentNewRole2;
+	
+	/** Number of days an invitation stays valid when no deadline is given (used by the GUI). */
+	public static final int DEFAULT_INVITATION_DAYS = 7;
 
 	/*******
 	 * <p> Method: Database </p>
@@ -147,6 +155,11 @@ public class Database {
 		        + "emailAddress VARCHAR(255), "
 		        + "role VARCHAR(255))";
 	    statement.execute(invitationCodesTable);
+	    
+	    // Add the deadline column.  "IF NOT EXISTS" lets this run safely on databases created
+	    // before deadlines existed, because CREATE TABLE IF NOT EXISTS will not add new columns
+	    // to a table that is already there.
+	    statement.execute("ALTER TABLE InvitationCodes ADD COLUMN IF NOT EXISTS deadline TIMESTAMP");
 	    
 	    // Create the lessons learned table (core fields, locking, and experience information)
 	    String lessonsTable = "CREATE TABLE IF NOT EXISTS lessonsDB ("
@@ -420,32 +433,138 @@ public boolean loginContributor(User user) {
 	/*******
 	 * <p> Method: String generateInvitationCode(String emailAddress, String role) </p>
 	 * 
-	 * <p> Description: Given an email address and a roles, this method establishes and invitation
-	 * code and adds a record to the InvitationCodes table.  When the invitation code is used, the
-	 * stored email address is used to establish the new user and the record is removed from the
-	 * table.</p>
+	 * <p> Description: Given an email address and a role, this method creates an invitation code
+	 * that expires DEFAULT_INVITATION_DAYS days from now.  It keeps the original signature so the
+	 * existing invitation GUI does not need to change.</p>
 	 * 
 	 * @param emailAddress specifies the email address for this new user.
 	 * 
-	 * @param role specified the role that this new user will play.
+	 * @param role specifies the role that this new user will play.
 	 * 
-	 * @return the code of six characters so the new user can use it to securely setup an account.
+	 * @return the six-character code the new user enters to set up an account.
 	 * 
 	 */
-	// Generates a new invitation code and inserts it into the database.
 	public String generateInvitationCode(String emailAddress, String role) {
-	    String code = UUID.randomUUID().toString().substring(0, 6); // Generate a random 6-character code
-	    String query = "INSERT INTO InvitationCodes (code, emailaddress, role) VALUES (?, ?, ?)";
+		LocalDateTime now = LocalDateTime.now();
+		return generateInvitationCode(emailAddress, role, now.plusDays(DEFAULT_INVITATION_DAYS), now);
+	}
+	
+	
+	/*******
+	 * <p> Method: String generateInvitationCode(String emailAddress, String role,
+	 * 		LocalDateTime deadline, LocalDateTime now) </p>
+	 * 
+	 * <p> Description: Creates an invitation code with a deadline for joining the system and adds
+	 * a record to the InvitationCodes table.  The code can be used until (but not at) the
+	 * deadline.  The current time is passed in rather than read from the clock so the deadline
+	 * rules can be tested exactly.</p>
+	 * 
+	 * @param emailAddress specifies the email address for this new user.
+	 * 
+	 * @param role specifies the role that this new user will play.
+	 * 
+	 * @param deadline is the date and time after which the code can no longer be used.
+	 * 
+	 * @param now is the current date and time.
+	 * 
+	 * @return the six-character code, or null if the database could not store it.
+	 * 
+	 * @throws IllegalArgumentException if the deadline is missing or is not in the future.
+	 */
+	public String generateInvitationCode(String emailAddress, String role,
+			LocalDateTime deadline, LocalDateTime now) {
+		
+		// Every invitation must have a deadline (user story: "a deadline for joining the system")
+		if (deadline == null)
+			throw new IllegalArgumentException("An invitation must have a deadline.");
+		
+		// A deadline that is now or in the past would create a code that is already expired
+		if (!deadline.isAfter(now))
+			throw new IllegalArgumentException("The invitation deadline must be in the future.");
+		
+	    String code = UUID.randomUUID().toString().substring(0, 6); // Random 6-character code
+	    String query = "INSERT INTO InvitationCodes (code, emailaddress, role, deadline) "
+	    		+ "VALUES (?, ?, ?, ?)";
 
 	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
 	        pstmt.setString(1, code);
 	        pstmt.setString(2, emailAddress);
 	        pstmt.setString(3, role);
+	        pstmt.setTimestamp(4, Timestamp.valueOf(deadline));
 	        pstmt.executeUpdate();
 	    } catch (SQLException e) {
 	        e.printStackTrace();
+	        return null;		// Do not hand out a code that was never saved
 	    }
 	    return code;
+	}
+	
+	
+	/*******
+	 * <p> Method: String validateInvitationCode(String code, LocalDateTime now) </p>
+	 * 
+	 * <p> Description: Decides whether an invitation code can be used to create an account right
+	 * now.  A code is valid only if it exists and the current time is before its deadline.  An
+	 * expired code is removed from the table as soon as it is detected.  Codes created before
+	 * deadlines existed have no deadline and are treated as expired, so old codes cannot be used
+	 * forever (the safe choice for access control).</p>
+	 * 
+	 * @param code is the six-character invitation code entered by the new user.
+	 * 
+	 * @param now is the current date and time.
+	 * 
+	 * @return an empty string if the code may be used, else a message to show the user.
+	 */
+	public String validateInvitationCode(String code, LocalDateTime now) {
+		
+		// Empty input is rejected before touching the database
+		if (code == null || code.trim().isEmpty())
+			return "Please enter an invitation code.";
+		
+		String query = "SELECT deadline FROM InvitationCodes WHERE code = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setString(1, code.trim());
+			ResultSet rs = pstmt.executeQuery();
+			
+			// No matching row: the code was never created, was already used, or was mistyped
+			if (!rs.next())
+				return "This invitation code is not valid.";
+			
+			Timestamp deadline = rs.getTimestamp("deadline");
+			
+			// Expired when there is no deadline, or when now is at or after the deadline
+			if (deadline == null || !now.isBefore(deadline.toLocalDateTime())) {
+				removeInvitationAfterUse(code.trim());
+				return "This invitation code has expired. Please ask an Admin for a new invitation.";
+			}
+			return "";
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return "Database error while checking the invitation code.";
+		}
+	}
+	
+	
+	/*******
+	 * <p> Method: int removeExpiredInvitations(LocalDateTime now) </p>
+	 * 
+	 * <p> Description: Removes every invitation whose deadline has passed (or that has no
+	 * deadline), so expired invitations no longer appear in the list.  The GUI should call this
+	 * before showing the list of outstanding invitations.</p>
+	 * 
+	 * @param now is the current date and time.
+	 * 
+	 * @return the number of expired invitations removed, or -1 on a database error.
+	 */
+	public int removeExpiredInvitations(LocalDateTime now) {
+		String query = "DELETE FROM InvitationCodes WHERE deadline IS NULL OR deadline <= ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setTimestamp(1, Timestamp.valueOf(now));
+			return pstmt.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return -1;
+		}
 	}
 
 	
