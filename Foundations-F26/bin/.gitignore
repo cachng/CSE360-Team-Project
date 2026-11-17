@@ -1,9 +1,3 @@
-/applicationMain/
-/contributorTests/
-/database/
-/entityClasses/
-/guiAddRemoveRoles/
-/guiAdminHome/
 /guiContributorHome/
 /guiFirstAdmin/
 /guiMultipleRoleDispatch/
@@ -14,3 +8,6 @@
 /guiUserLogin/
 /guiUserUpdate/
 /lessonsLearned/
+/passwordPopUpWindow/
+/staffAnalyticsTestbed/
+/userNameRecognizer/
