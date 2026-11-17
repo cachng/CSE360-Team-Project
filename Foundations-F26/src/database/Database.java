@@ -10,6 +10,11 @@ import java.util.List;
 import java.util.UUID;
 import java.time.LocalDateTime;
 
+import java.util.Map;
+
+import lessonsLearned.*;
+import entityClasses.CoachingPrompt;
+import entityClasses.CoachingPromptList;
 import entityClasses.LessonsLearned;
 import entityClasses.LessonsLearnedList;
 import entityClasses.User;
@@ -26,7 +31,6 @@ import entityClasses.User;
  * <p> Copyright: Lynn Robert Carter © 2025 </p>
  * 
  * @author Lynn Robert Carter
- * @author Project Team 37
  * 
  * @version 2.00		2025-04-29 Updated and expanded from the version produce by Pravalika 
  * 							Mukkiri and Ishwarya Hidkimath Basavaraj
@@ -54,9 +58,10 @@ public class Database {
 	static final String PASS = ""; 
 
 	//  Shared variables used within this class
-	private Connection connection = null;		// Singleton to access the database 
+	private Connection connection = null;		// Singleton to access the database
 	private Statement statement = null;			// The H2 Statement is used to construct queries
-	
+	private final String dbUrl;					// DB_URL, unless a test passes its own
+
 	// These are the easily accessible attributes of the currently logged-in user
 	// This is only useful for single user applications
 	private String currentUsername;
@@ -81,9 +86,22 @@ public class Database {
 	 */
 	
 	public Database () {
-		
+		this(DB_URL);
 	}
-	
+
+
+	/*******
+	 * <p> Method: Database(String url) </p>
+	 *
+	 * <p> Description: Used by the HW3 tests to open a separate H2 database, so the tests never
+	 * 		change the real ~/FoundationDatabase file.</p>
+	 *
+	 * @param url is the JDBC URL of the database to open, e.g. jdbc:h2:mem:hw3test
+	 */
+	public Database (String url) {
+		dbUrl = url;
+	}
+
 	
 /*******
  * <p> Method: connectToDatabase </p>
@@ -97,7 +115,7 @@ public class Database {
 	public void connectToDatabase() throws SQLException {
 		try {
 			Class.forName(JDBC_DRIVER); // Load the JDBC driver
-			connection = DriverManager.getConnection(DB_URL, USER, PASS);
+			connection = DriverManager.getConnection(dbUrl, USER, PASS);
 			statement = connection.createStatement(); 
 			// You can use this command to clear the database and restart from fresh.
 			//statement.execute("DROP ALL OBJECTS");
@@ -159,6 +177,18 @@ public class Database {
 	            + "hoursSpent DOUBLE DEFAULT 0, "
 	            + "effortNotes VARCHAR(2000))";
 	    statement.execute(lessonsTable);
+
+	    // Create the coaching prompts table (TP3: Staff Automated Feedback & AI Coaching Prompts).
+	    // "trigger" is an SQL keyword, so the columns carry a "prompt" prefix.
+	    String promptsTable = "CREATE TABLE IF NOT EXISTS coachingPromptsDB ("
+	            + "id INT AUTO_INCREMENT PRIMARY KEY, "
+	            + "promptText VARCHAR(200), "
+	            + "promptField VARCHAR(20), "
+	            + "promptTrigger VARCHAR(20), "
+	            + "triggerValue VARCHAR(20), "
+	            + "enabled BOOL DEFAULT TRUE, "
+	            + "updatedBy VARCHAR(255))";
+	    statement.execute(promptsTable);
 	}
 
 
@@ -185,7 +215,7 @@ public class Database {
 	
 	
 /*******
- * <p> Method: getNumberOfUsers() </p>
+ * <p> Method: getNumberOfUsers </p>
  * 
  * <p> Description: Returns an integer .of the number of users currently in the user database. </p>
  * 
@@ -1483,7 +1513,7 @@ public boolean loginContributor(User user) {
 
 	
 	/*******
-	 * <p> Method: LessonsLearnedList runLessonQuery(String query, String parameter) </p>
+	 * <p> Method: LessonCollection runLessonQuery(String query, String parameter) </p>
 	 * 
 	 * <p> Description: Shared helper so the "all" and "subset" reads do not repeat the same
 	 * 		loop.  The parameter is optional (null means the query has no placeholder).</p>
@@ -1525,6 +1555,303 @@ public boolean loginContributor(User user) {
 		return lesson;
 	}
 	
+	/*-********************************************************************************************
+
+	Coaching prompts (TP3: Staff Automated Feedback & AI Coaching Prompts, HW3 Task 5 prototype)
+
+	*/
+
+	/*******
+	 * <p> Method: String createPrompt(CoachingPrompt prompt, String actingUser, String actingRole) </p>
+	 *
+	 * <p> Description: Store a new coaching prompt.  Only staff may do this, the prompt must be
+	 * 		valid, and it must not duplicate a stored prompt.  On success the prompt's id is set.</p>
+	 *
+	 * @param prompt is the prompt to store
+	 * @param actingUser is the username of the staff member, recorded as the prompt's editor
+	 * @param actingRole is the role of the acting user
+	 *
+	 * @return an empty string if the prompt was stored, else a helpful error message.
+	 */
+	public String createPrompt(CoachingPrompt prompt, String actingUser, String actingRole) {
+		String error = checkPromptChange(prompt, actingRole);
+		if (!error.isEmpty()) return error;
+		if (isDuplicatePrompt(prompt, 0))
+			return "A prompt with the same rule and text already exists.";
+
+		String insert = "INSERT INTO coachingPromptsDB (promptText, promptField, promptTrigger, "
+				+ "triggerValue, enabled, updatedBy) VALUES (?, ?, ?, ?, ?, ?)";
+		try (PreparedStatement pstmt = connection.prepareStatement(insert,
+				Statement.RETURN_GENERATED_KEYS)) {
+			pstmt.setString(1, prompt.getText());
+			pstmt.setString(2, prompt.getField().name());
+			pstmt.setString(3, prompt.getTrigger().name());
+			pstmt.setString(4, prompt.getTriggerValue());
+			pstmt.setBoolean(5, prompt.isEnabled());
+			pstmt.setString(6, actingUser);
+			pstmt.executeUpdate();
+			try (ResultSet keys = pstmt.getGeneratedKeys()) {
+				if (keys.next()) prompt.setId(keys.getInt(1));
+			}
+			prompt.setUpdatedBy(actingUser);
+			return "";
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return "Database error while saving the prompt: " + e.getMessage();
+		}
+	}
+
+
+	/*******
+	 * <p> Method: String updatePrompt(CoachingPrompt prompt, String actingUser, String actingRole) </p>
+	 *
+	 * <p> Description: Save staff changes to a prompt's text, rule and on/off state.  The same
+	 * 		checks as createPrompt apply, and the prompt must still exist.</p>
+	 *
+	 * @param prompt is the changed prompt; its id says which stored prompt to replace
+	 * @param actingUser is the username of the staff member, recorded as the prompt's editor
+	 * @param actingRole is the role of the acting user
+	 *
+	 * @return an empty string on success, else a helpful error message.
+	 */
+	public String updatePrompt(CoachingPrompt prompt, String actingUser, String actingRole) {
+		String error = checkPromptChange(prompt, actingRole);
+		if (!error.isEmpty()) return error;
+		if (!promptExists(prompt.getId())) return "No prompt exists with id " + prompt.getId() + ".";
+		// Leave the prompt's own row out of the duplicate check, or saving a prompt without
+		// changing its text would be refused as a duplicate of itself.
+		if (isDuplicatePrompt(prompt, prompt.getId()))
+			return "A prompt with the same rule and text already exists.";
+
+		String update = "UPDATE coachingPromptsDB SET promptText = ?, promptField = ?, "
+				+ "promptTrigger = ?, triggerValue = ?, enabled = ?, updatedBy = ? WHERE id = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(update)) {
+			pstmt.setString(1, prompt.getText());
+			pstmt.setString(2, prompt.getField().name());
+			pstmt.setString(3, prompt.getTrigger().name());
+			pstmt.setString(4, prompt.getTriggerValue());
+			pstmt.setBoolean(5, prompt.isEnabled());
+			pstmt.setString(6, actingUser);
+			pstmt.setInt(7, prompt.getId());
+			pstmt.executeUpdate();
+			prompt.setUpdatedBy(actingUser);
+			return "";
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return "Database error while updating the prompt: " + e.getMessage();
+		}
+	}
+
+
+	/*******
+	 * <p> Method: String setPromptEnabled(int id, boolean enabled, String actingUser, String actingRole) </p>
+	 *
+	 * <p> Description: Turn a prompt on or off.  Students never see a prompt that is off.</p>
+	 *
+	 * @param id is the prompt's id
+	 * @param enabled is true to turn the prompt on, false to turn it off
+	 * @param actingUser is the username of the staff member
+	 * @param actingRole is the role of the acting user
+	 *
+	 * @return an empty string on success, else a helpful error message.
+	 */
+	public String setPromptEnabled(int id, boolean enabled, String actingUser, String actingRole) {
+		if (!CoachingPrompt.isStaff(actingRole)) return STAFF_ONLY;
+		if (!promptExists(id)) return "No prompt exists with id " + id + ".";
+		String update = "UPDATE coachingPromptsDB SET enabled = ?, updatedBy = ? WHERE id = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(update)) {
+			pstmt.setBoolean(1, enabled);
+			pstmt.setString(2, actingUser);
+			pstmt.setInt(3, id);
+			pstmt.executeUpdate();
+			return "";
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return "Database error while changing the prompt: " + e.getMessage();
+		}
+	}
+
+
+	/*******
+	 * <p> Method: String deletePrompt(int id, String actingUser, String actingRole) </p>
+	 *
+	 * <p> Description: Remove a prompt.  Lessons already saved are not affected, because
+	 * 		prompts are advice and are never stored with a lesson.</p>
+	 *
+	 * @param id is the prompt's id
+	 * @param actingUser is the username of the staff member
+	 * @param actingRole is the role of the acting user
+	 *
+	 * @return an empty string on success, else a helpful error message.
+	 */
+	public String deletePrompt(int id, String actingUser, String actingRole) {
+		if (!CoachingPrompt.isStaff(actingRole)) return STAFF_ONLY;
+		if (!promptExists(id)) return "No prompt exists with id " + id + ".";
+		try (PreparedStatement pstmt = connection.prepareStatement(
+				"DELETE FROM coachingPromptsDB WHERE id = ?")) {
+			pstmt.setInt(1, id);
+			pstmt.executeUpdate();
+			return "";
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return "Database error while deleting the prompt: " + e.getMessage();
+		}
+	}
+
+
+	/*******
+	 * <p> Method: CoachingPrompt getPrompt(int id) </p>
+	 *
+	 * <p> Description: Read one prompt.</p>
+	 *
+	 * @param id is the prompt's id
+	 *
+	 * @return the prompt, or null if there is no such prompt or its stored row is damaged.
+	 */
+	public CoachingPrompt getPrompt(int id) {
+		try (PreparedStatement pstmt = connection.prepareStatement(
+				"SELECT * FROM coachingPromptsDB WHERE id = ?")) {
+			pstmt.setInt(1, id);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) return buildPrompt(rs);
+		} catch (SQLException | RuntimeException e) {
+			// A damaged row must not crash the caller (HW3 A08 finding D2 for lessons).
+			System.err.println("Coaching prompt " + id + " could not be read: " + e.getMessage());
+		}
+		return null;
+	}
+
+
+	/*******
+	 * <p> Method: CoachingPromptList getAllPrompts() </p>
+	 *
+	 * <p> Description: Read every stored prompt, for the staff review page.  A damaged row is
+	 * 		skipped and counted (getSkippedCount) instead of stopping the whole list.</p>
+	 *
+	 * @return the readable prompts, possibly empty, never null.
+	 */
+	public CoachingPromptList getAllPrompts() {
+		CoachingPromptList result = new CoachingPromptList();
+		try (PreparedStatement pstmt = connection.prepareStatement(
+				"SELECT * FROM coachingPromptsDB ORDER BY id")) {
+			ResultSet rs = pstmt.executeQuery();
+			while (rs.next()) {
+				// The catch is inside the loop on purpose: in the lesson read path one bad row
+				// threw out of the loop and hid every lesson (HW3 A08 finding D1).
+				try {
+					result.add(buildPrompt(rs));
+				} catch (RuntimeException e) {
+					result.addSkipped();
+					System.err.println("Skipped damaged coaching prompt " + rs.getInt("id")
+							+ ": " + e.getMessage());
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+
+	/*******
+	 * <p> Method: CoachingPromptList getPromptsForDraft(Map&lt;LessonField, String&gt; draft) </p>
+	 *
+	 * <p> Description: The prompts a student sees while writing a lesson, and what a staff
+	 * 		preview shows for a sample draft.</p>
+	 *
+	 * @param draft maps each lesson field to the text currently in its box
+	 *
+	 * @return the enabled prompts whose trigger matches the draft, possibly empty, never null.
+	 */
+	public CoachingPromptList getPromptsForDraft(Map<CoachingPrompt.LessonField, String> draft) {
+		return getAllPrompts().promptsFor(draft);
+	}
+
+
+	/** The message every prompt change returns to a user who is not staff. */
+	private static final String STAFF_ONLY = "Only staff can change coaching prompts.";
+
+
+	/*******
+	 * <p> Method: String checkPromptChange(CoachingPrompt prompt, String actingRole) </p>
+	 *
+	 * <p> Description: The checks shared by create and update: the user is staff and the
+	 * 		prompt is valid.</p>
+	 */
+	private String checkPromptChange(CoachingPrompt prompt, String actingRole) {
+		// Check the role first, so a non-staff user learns nothing about what a valid prompt is.
+		if (!CoachingPrompt.isStaff(actingRole)) return STAFF_ONLY;
+		return CoachingPrompt.validatePrompt(prompt);
+	}
+
+
+	/*******
+	 * <p> Method: boolean promptExists(int id) </p>
+	 *
+	 * <p> Description: Whether a row with this id is stored, whatever is in it.</p>
+	 */
+	private boolean promptExists(int id) {
+		// Count the row instead of calling getPrompt: getPrompt returns null for a damaged row,
+		// and staff must still be able to turn off or delete a damaged prompt to clean it up.
+		try (PreparedStatement pstmt = connection.prepareStatement(
+				"SELECT COUNT(*) FROM coachingPromptsDB WHERE id = ?")) {
+			pstmt.setInt(1, id);
+			ResultSet rs = pstmt.executeQuery();
+			return rs.next() && rs.getInt(1) > 0;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+
+	/*******
+	 * <p> Method: boolean isDuplicatePrompt(CoachingPrompt prompt, int ignoreId) </p>
+	 *
+	 * <p> Description: Whether a stored prompt other than ignoreId duplicates this one.</p>
+	 */
+	private boolean isDuplicatePrompt(CoachingPrompt prompt, int ignoreId) {
+		for (CoachingPrompt stored : getAllPrompts().getAll())
+			if (stored.getId() != ignoreId && stored.isDuplicateOf(prompt)) return true;
+		return false;
+	}
+
+
+	/*******
+	 * <p> Method: CoachingPrompt buildPrompt(ResultSet rs) </p>
+	 *
+	 * <p> Description: Convert the current row into a prompt.  Every value goes back through
+	 * 		the CoachingPrompt setters, so a row that was damaged outside the app is rejected
+	 * 		here instead of reaching a student (OWASP A08 / CWE-502).</p>
+	 *
+	 * @throws IllegalArgumentException if a stored value breaks a prompt rule
+	 * @throws SQLException if the row cannot be read
+	 */
+	private CoachingPrompt buildPrompt(ResultSet rs) throws SQLException {
+		CoachingPrompt prompt = new CoachingPrompt();
+		prompt.setId(rs.getInt("id"));
+		prompt.setText(rs.getString("promptText"));
+		prompt.setRule(parsePromptEnum(CoachingPrompt.LessonField.class, rs.getString("promptField")),
+				parsePromptEnum(CoachingPrompt.Trigger.class, rs.getString("promptTrigger")),
+				rs.getString("triggerValue"));
+		prompt.setEnabled(rs.getBoolean("enabled"));
+		prompt.setUpdatedBy(rs.getString("updatedBy"));
+		return prompt;
+	}
+
+
+	/*******
+	 * <p> Method: E parsePromptEnum(Class&lt;E&gt; type, String text) </p>
+	 *
+	 * <p> Description: Turn stored text into an enum value.</p>
+	 */
+	private static <E extends Enum<E>> E parsePromptEnum(Class<E> type, String text) {
+		// Enum.valueOf throws NullPointerException for NULL; turn it into the same
+		// IllegalArgumentException as any other bad value so callers handle one kind of error.
+		if (text == null) throw new IllegalArgumentException("Missing " + type.getSimpleName() + ".");
+		return Enum.valueOf(type, text);
+	}
+
 	/*******
 	 * <p> Debugging method</p>
 	 * 
