@@ -1,3 +1,9 @@
+/applicationMain/
+/contributorTests/
+/database/
+/entityClasses/
+/guiAddRemoveRoles/
+/guiAdminHome/
 /guiContributorHome/
 /guiFirstAdmin/
 /guiMultipleRoleDispatch/
